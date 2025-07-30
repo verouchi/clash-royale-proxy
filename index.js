@@ -15,15 +15,32 @@ app.get("/v1/players/:tag", async (req, res) => {
   try {
     const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${ROYALE_API_TOKEN}`
+        Authorization: `Bearer ${ROYALE_API_TOKEN}`,
+        Accept: "application/json"
       }
     });
 
-    const data = await response.json();
-    res.status(response.status).json(data);
+    const text = await response.text();
+
+    // Try parsing the JSON. If it's invalid or empty, throw an error.
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error("Invalid JSON received from Clash Royale API: " + text);
+    }
+
+    if (response.ok) {
+      res.status(200).json(data);
+    } else {
+      res.status(response.status).json(data);
+    }
   } catch (error) {
-    console.error("Proxy error:", error);
-    res.status(500).json({ error: "Proxy request failed", details: error.message });
+    console.error("Proxy error:", error.message);
+    res.status(500).json({
+      error: "Proxy request failed",
+      details: error.message
+    });
   }
 });
 
