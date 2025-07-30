@@ -1,45 +1,33 @@
-import express from "express";
-import fetch from "node-fetch";
-import dotenv from "dotenv";
-
-dotenv.config();
+const express = require("express");
+const fetch = require("node-fetch");
+const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 10000;
-const TOKEN = process.env.ROYALE_API_TOKEN;
+app.use(cors());
 
-if (!TOKEN) {
-  console.error("ROYALE_API_TOKEN not set in environment variables.");
-  process.exit(1);
-}
+const API_BASE_URL = "https://api.clashroyale.com/v1";
+const API_TOKEN = process.env.ROYALE_API_TOKEN;
 
-app.get("/player/:tag", async (req, res) => {
-  const playerTag = encodeURIComponent(req.params.tag);
-  const url = `https://api.clashroyale.com/v1/players/%23${playerTag}`;
+app.get("/v1/*", async (req, res) => {
+  const path = req.params[0];
+  const url = `${API_BASE_URL}/${path}`;
 
   try {
     const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${TOKEN}`,
+        Authorization: `Bearer ${API_TOKEN}`,
       },
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return res.status(response.status).json({ error: errorText });
-    }
-
     const data = await response.json();
-    res.json(data);
+    res.status(response.status).json(data);
   } catch (err) {
-    res.status(500).json({ error: "Internal server error", details: err.message });
+    res.status(500).json({ error: "Proxy error", details: err.message });
   }
 });
 
-app.get("/", (req, res) => {
-  res.send("Clash Royale Proxy is running!");
-});
-
+// Listen on the port Render automatically assigns
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`Proxy running on port ${PORT}`);
-});
+ 
