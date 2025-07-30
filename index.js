@@ -1,30 +1,33 @@
-require("dotenv").config();
-const express = require("express");
-const fetch = require("node-fetch");
+import express from 'express';
+import dotenv from 'dotenv';
+import fetch from 'node-fetch';
+
+dotenv.config();
+
 const app = express();
-
 const PORT = process.env.PORT || 10000;
-const API_BASE = "https://api.clashroyale.com/v1";
+const TOKEN = process.env.ROYALE_API_TOKEN;
 
-app.get("/v1/players/:tag", async (req, res) => {
-  const tag = req.params.tag.replace("#", "");
+app.get('/v1/players/:tag', async (req, res) => {
+  const tag = req.params.tag;
+  const url = `https://api.clashroyale.com/v1/players/%23${tag}`;
+
   try {
-    const response = await fetch(`${API_BASE}/players/%23${tag}`, {
+    const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${process.env.ROYALE_API_TOKEN}`,
-        Accept: "application/json"
+        Authorization: `Bearer ${TOKEN}`
       }
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const errorText = await response.text();
-      return res.status(response.status).json({ error: "Proxy request failed", details: errorText });
+      return res.status(response.status).json({ error: data });
     }
 
-    const data = await response.json();
     res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: "Proxy request failed", details: error.message });
+  } catch (err) {
+    res.status(500).json({ error: 'Proxy request failed', details: err.message });
   }
 });
 
